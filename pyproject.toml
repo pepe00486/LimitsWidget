@@ -9,6 +9,9 @@ description = "A small Linux widget for Codex usage limits"
 requires-python = ">=3.11"
 dependencies = ["PySide6-Essentials>=6.8,<7"]
 
+[project.optional-dependencies]
+dev = ["pylint>=3.3,<5"]
+
 [project.scripts]
 limit-widget = "limit_widget.app:main"
 
@@ -17,3 +20,18 @@ include = ["limit_widget*"]
 
 [tool.setuptools.dynamic]
 version = {attr = "limit_widget.__version__"}
+
+[tool.pylint.main]
+# Qt exposes its classes through compiled extension modules.
+extension-pkg-allow-list = ["PySide6"]
+
+[tool.pylint.design]
+# Window controls and process state need up to ten instance attributes.
+max-attributes = 10
+
+[tool.pylint.basic]
+# These names implement Qt callbacks and must match the Qt interface.
+good-names = [
+    "paintEvent", "mousePressEvent", "mouseMoveEvent",
+    "mouseReleaseEvent", "contextMenuEvent", "closeEvent",
+]

@@ -19,13 +19,17 @@ class UsageProvider(QObject):
     name = ""
 
     def refresh(self) -> None:
+        """Request usage without blocking the Qt event loop."""
         raise NotImplementedError
 
     def close(self) -> None:
+        """Stop the provider and release its resources."""
         raise NotImplementedError
 
 
 class CodexProvider(UsageProvider):
+    """Read usage through a local Codex app-server process."""
+
     name = "Codex"
 
     def __init__(self, executable: str = "codex", parent: QObject | None = None) -> None:
@@ -150,7 +154,7 @@ class CodexProvider(UsageProvider):
     def _timed_out(self) -> None:
         self._abort(f"Codex did not respond within {REQUEST_TIMEOUT_SECONDS} seconds. Try Refresh.")
 
-    def _process_error(self, error):
+    def _process_error(self, _error):
         if self.stopping or self.reported_failure:
             return
         self._abort("Cannot start Codex. Check that the codex command is installed.")

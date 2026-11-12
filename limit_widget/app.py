@@ -35,6 +35,8 @@ def configure_display(
 
 
 class LimitWidget(QWidget):
+    """Display two usage limits in a movable desktop window."""
+
     def __init__(
         self, provider: UsageProvider, interval: int = DEFAULT_REFRESH_SECONDS, demo: bool = False
     ) -> None:
@@ -47,6 +49,7 @@ class LimitWidget(QWidget):
         self.drag_offset = None
         self.settings = QSettings("LimitWidget", "LimitWidget")
         self._setup_window()
+        self.close_button = self._create_close_button()
         self.provider.updated.connect(self._updated)
         self.provider.failed.connect(self._failed)
         self.poll = QTimer(self)
@@ -79,7 +82,6 @@ class LimitWidget(QWidget):
         self.setFixedSize(236, 94)
         self.setCursor(Qt.CursorShape.SizeAllCursor)
         self.setAccessibleName("Codex usage limits")
-        self._create_close_button()
         position = self.settings.value("position", QPoint(80, 80))
         if isinstance(position, QPoint) and any(
             screen.availableGeometry().contains(QRect(position, self.size()))
@@ -87,20 +89,21 @@ class LimitWidget(QWidget):
         ):
             self.move(position)
 
-    def _create_close_button(self) -> None:
-        self.close_button = QToolButton(self)
-        self.close_button.setText("×")
-        self.close_button.setGeometry(self.width() - 24, 5, 18, 18)
-        self.close_button.setToolTip("Close widget")
-        self.close_button.setAccessibleName("Close widget")
-        self.close_button.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.close_button.setStyleSheet(
+    def _create_close_button(self) -> QToolButton:
+        button = QToolButton(self)
+        button.setText("×")
+        button.setGeometry(self.width() - 24, 5, 18, 18)
+        button.setToolTip("Close widget")
+        button.setAccessibleName("Close widget")
+        button.setCursor(Qt.CursorShape.PointingHandCursor)
+        button.setStyleSheet(
             "QToolButton { color: #aeb8c7; background: transparent;"
             " border: none; border-radius: 4px; font-size: 16px; }"
             "QToolButton:hover, QToolButton:focus { color: white; background: #9c3945; }"
             "QToolButton:pressed { background: #742a33; }"
         )
-        self.close_button.clicked.connect(self.close)
+        button.clicked.connect(self.close)
+        return button
 
     def _updated(self, usage: Usage) -> None:
         self.usage = usage
@@ -136,7 +139,8 @@ class LimitWidget(QWidget):
         self.setToolTip(description)
         self.setAccessibleDescription(description)
 
-    def paintEvent(self, event):
+    def paintEvent(self, _event):
+        """Draw the panel and both limit values."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         # The window is transparent. A faint panel keeps text readable.
@@ -163,6 +167,7 @@ class LimitWidget(QWidget):
         painter.end()
 
     def mousePressEvent(self, event):
+        """Start a window move when the left button is pressed."""
         if event.button() == Qt.MouseButton.LeftButton:
             handle = self.windowHandle()
             if handle and handle.startSystemMove():
@@ -172,13 +177,16 @@ class LimitWidget(QWidget):
             event.accept()
 
     def mouseMoveEvent(self, event):
+        """Move the window when native dragging is unavailable."""
         if self.drag_offset is not None and event.buttons() & Qt.MouseButton.LeftButton:
             self.move(event.globalPosition().toPoint() - self.drag_offset)
 
-    def mouseReleaseEvent(self, event):
+    def mouseReleaseEvent(self, _event):
+        """End the drag operation."""
         self.drag_offset = None
 
     def contextMenuEvent(self, event):
+        """Show refresh, stacking, and close controls."""
         menu = QMenu(self)
         refresh = menu.addAction("Refresh now", self.provider.refresh)
         refresh.setEnabled(not self.demo)
@@ -195,6 +203,7 @@ class LimitWidget(QWidget):
         self.show()
 
     def closeEvent(self, event):
+        """Save the position and stop the timers and provider."""
         self.poll.stop()
         self.clock.stop()
         self.settings.setValue("position", self.pos())
@@ -203,6 +212,7 @@ class LimitWidget(QWidget):
 
 
 def main() -> None:
+    """Parse options and run the Qt application."""
     parser = argparse.ArgumentParser(description="Show Codex usage limits on Linux.")
     parser.add_argument(
         "--interval", type=int, default=DEFAULT_REFRESH_SECONDS, metavar="SECONDS",
