@@ -25,6 +25,16 @@ version = {attr = "limit_widget.__version__"}
 # Qt exposes its classes through compiled extension modules.
 extension-pkg-allow-list = ["PySide6"]
 
+[tool.pylint.typecheck]
+# Qt creates bound signal methods at runtime. Keep other member checks active.
+generated-members = [
+    'self\.(poll|clock|timeout)\.timeout\.connect$',
+    'self\.process\.(started|readyReadStandardOutput|readyReadStandardError|errorOccurred|finished)\.connect$',
+    'quit_action\.triggered\.connect$',
+    'button\.clicked\.connect$',
+    'app\.aboutToQuit\.connect$',
+]
+
 [tool.pylint.design]
 # Window controls and process state need up to ten instance attributes.
 max-attributes = 10
