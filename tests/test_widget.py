@@ -2,10 +2,9 @@
 
 import os
 from pathlib import Path
+import shutil
 import tempfile
 import unittest
-
-os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
 from PySide6.QtCore import QProcess, QProcessEnvironment, QSettings, Qt
 from PySide6.QtTest import QTest
@@ -16,24 +15,28 @@ from limit_widget.providers import CodexProvider
 
 
 class WidgetTests(unittest.TestCase):
+    """Check window controls, polling, and provider failures."""
+
     @classmethod
     def setUpClass(cls):
+        os.environ["QT_QPA_PLATFORM"] = "offscreen"
         cls.app = QApplication.instance() or QApplication([])
         cls.app.setQuitOnLastWindowClosed(False)
 
     def setUp(self):
-        self.temp = tempfile.TemporaryDirectory()
-        self.addCleanup(self.temp.cleanup)
+        self.temp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.temp)
         QSettings.setDefaultFormat(QSettings.Format.IniFormat)
-        QSettings.setPath(QSettings.Format.IniFormat, QSettings.Scope.UserScope, self.temp.name)
+        QSettings.setPath(QSettings.Format.IniFormat, QSettings.Scope.UserScope, str(self.temp))
         self.results = []
         self.errors = []
 
     def provider(self, scenario="normal"):
+        """Create a fake Codex provider and register cleanup."""
         provider = CodexProvider(str(Path(__file__).with_name("fake_codex.py")))
         environment = QProcessEnvironment.systemEnvironment()
         environment.insert("WIDGET_TEST_SCENARIO", scenario)
-        environment.insert("WIDGET_TEST_MARKER", str(Path(self.temp.name) / "first-request"))
+        environment.insert("WIDGET_TEST_MARKER", str(self.temp / "first-request"))
         provider.process.setProcessEnvironment(environment)
         provider.updated.connect(self.results.append)
         provider.failed.connect(self.errors.append)
@@ -41,12 +44,14 @@ class WidgetTests(unittest.TestCase):
         return provider
 
     def window(self, provider, demo=False):
+        """Create and show a widget for the selected provider."""
         widget = LimitWidget(provider, demo=demo)
         self.addCleanup(widget.close)
         widget.show()
         return widget
 
     def wait_until(self, condition):
+        """Process Qt events until the condition succeeds or the test times out."""
         for _ in range(500):
             if condition():
                 return
@@ -54,6 +59,7 @@ class WidgetTests(unittest.TestCase):
         self.fail(f"Timed out. Provider errors: {self.errors}")
 
     def test_handshake_and_refresh(self):
+        """Complete initialization and read updated values."""
         provider = self.provider()
         provider.refresh()
         self.wait_until(lambda: len(self.results) == 1)
@@ -66,6 +72,7 @@ class WidgetTests(unittest.TestCase):
         self.assertFalse(self.errors)
 
     def test_timer_updates_both_limits(self):
+        """Update both limits through the automatic timer."""
         widget = self.window(self.provider())
         self.assertEqual(widget.poll.interval(), DEFAULT_REFRESH_SECONDS * 1000)
         self.assertIn("Automatic refresh: every 30 seconds", widget.toolTip())
@@ -78,6 +85,7 @@ class WidgetTests(unittest.TestCase):
         self.assertFalse(widget.error)
 
     def test_timer_recovers_after_timeout(self):
+        """Retry automatically after a request timeout."""
         provider = self.provider("timeout")
         provider.timeout.setInterval(80)
         widget = self.window(provider)
@@ -88,23 +96,27 @@ class WidgetTests(unittest.TestCase):
         self.assertFalse(widget.error)
 
     def test_signed_out_account_reports_error(self):
+        """Report a signed-out account without starting a login flow."""
         self.provider("signed-out").refresh()
         self.wait_until(lambda: bool(self.errors))
         self.assertIn("codex login", self.errors[0])
 
     def test_missing_executable_reports_error(self):
+        """Report a missing Codex executable."""
         provider = self.provider()
-        provider.executable = str(Path(self.temp.name) / "missing")
+        provider.executable = str(self.temp / "missing")
         provider.refresh()
         self.wait_until(lambda: bool(self.errors))
         self.assertIn("Cannot start Codex", self.errors[0])
 
     def test_invalid_response_reports_error(self):
+        """Report malformed protocol responses."""
         self.provider("malformed").refresh()
         self.wait_until(lambda: bool(self.errors))
         self.assertIn("invalid response", self.errors[0])
 
     def test_close_button_stops_timers_and_process(self):
+        """Stop timers and the provider when the close button is clicked."""
         provider = self.provider()
         widget = self.window(provider)
         self.wait_until(lambda: bool(self.results))
@@ -115,6 +127,7 @@ class WidgetTests(unittest.TestCase):
         self.assertEqual(provider.process.state(), QProcess.ProcessState.NotRunning)
 
     def test_error_keeps_last_successful_values(self):
+        """Keep the last successful values after a connection error."""
         widget = self.window(self.provider(), demo=True)
         usage, updated = widget.usage, widget.last_update
         widget.provider.failed.emit("Connection lost")

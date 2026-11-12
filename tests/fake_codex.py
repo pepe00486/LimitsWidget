@@ -8,6 +8,7 @@ import sys
 
 
 def main():
+    """Handle protocol requests for the selected test scenario."""
     scenario = os.environ.get("WIDGET_TEST_SCENARIO", "normal")
     initialized = False
     reads = 0

@@ -26,7 +26,7 @@ The minimum refresh period is 15 seconds.
 After setup, run this command from the repository directory:
 
 ```bash
-python3 install-launcher.py
+python3 install_launcher.py
 ```
 
 The installer creates `LimitWidget.desktop` on your desktop and in your user
@@ -40,7 +40,7 @@ open `.desktop` files as text inside project folders. Use the installed desktop
 shortcut or application menu entry.
 
 The shortcuts contain an absolute path to `launch.sh`. If you move or rename
-the repository, repeat setup and run `python3 install-launcher.py` again.
+the repository, repeat setup and run `python3 install_launcher.py` again.
 Recreate `.venv` if its installed commands still use the old path.
 
 If the widget does not start, check `launcher.log` in the repository directory.
@@ -94,4 +94,12 @@ dependencies but no network access or credentials.
 
 ```bash
 .venv/bin/python -m unittest discover -s tests -v
+```
+
+To run pylint, install the development dependencies in the same environment
+as Qt. This lets pylint inspect the PySide6 extension modules.
+
+```bash
+.venv/bin/python -m pip install -e '.[dev]'
+.venv/bin/python -m pylint $(git ls-files '*.py')
 ```

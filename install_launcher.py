@@ -9,8 +9,11 @@ import subprocess
 
 
 def desktop_directory() -> Path:
+    """Find the configured desktop directory or use the default location."""
     if shutil.which("xdg-user-dir"):
-        result = subprocess.run(["xdg-user-dir", "DESKTOP"], capture_output=True, text=True)
+        result = subprocess.run(
+            ["xdg-user-dir", "DESKTOP"], capture_output=True, text=True, check=False
+        )
         if result.returncode == 0 and result.stdout.strip():
             directory = Path(result.stdout.strip())
             if directory != Path.home():
@@ -38,6 +41,7 @@ StartupNotify=false
 
 
 def main() -> None:
+    """Install shortcuts for the current repository location."""
     parser = argparse.ArgumentParser(description="Install the Limit Widget launcher.")
     parser.add_argument("--desktop-dir", type=Path)
     parser.add_argument("--applications-dir", type=Path)
@@ -56,7 +60,7 @@ def main() -> None:
         target.chmod(0o755)
         if shutil.which("gio"):
             subprocess.run(["gio", "set", str(target), "metadata::trusted", "true"],
-                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
         print(f"Installed: {target}")
     print("Open Codex Limit Widget from the application menu or your desktop.")
     print("If your desktop asks, select Allow Launching.")
