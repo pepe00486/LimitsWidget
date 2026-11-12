@@ -38,7 +38,7 @@ class LimitWidget(QWidget):
     """Display two usage limits in a movable desktop window."""
 
     def __init__(
-        self, provider: UsageProvider, interval: int = DEFAULT_REFRESH_SECONDS, demo: bool = False
+                         self, provider: UsageProvider, interval: int = DEFAULT_REFRESH_SECONDS, demo: bool = False
     ) -> None:
         super().__init__()
         self.provider = provider
