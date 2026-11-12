@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "codex-limit-widget"
+dynamic = ["version"]
+description = "A small Linux widget for Codex usage limits"
+requires-python = ">=3.11"
+dependencies = ["PySide6-Essentials>=6.8,<7"]
+
+[project.scripts]
+limit-widget = "limit_widget.app:main"
+
+[tool.setuptools.packages.find]
+include = ["limit_widget*"]
+
+[tool.setuptools.dynamic]
+version = {attr = "limit_widget.__version__"}
