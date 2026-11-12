@@ -17,7 +17,10 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pylint
+        python -m pip install -e '.[dev]'
+    - name: Check Qt imports
+      run: |
+        python -c "from PySide6 import QtCore, QtGui, QtWidgets, QtTest; print(QtCore.__version__)"
     - name: Analysing the code with pylint
       run: |
-        pylint $(git ls-files '*.py')
+        python -m pylint $(git ls-files '*.py')
