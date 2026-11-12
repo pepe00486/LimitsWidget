@@ -9,7 +9,7 @@ Use Python 3.11 or later with `pip` and `venv`. Install Codex CLI and sign in
 with your ChatGPT account under the same Linux user.
 
 ```bash
-cd StatusWidget
+cd LimitsWidget
 python3 -m venv .venv
 .venv/bin/python -m pip install -e .
 ./launch.sh
@@ -17,19 +17,34 @@ python3 -m venv .venv
 
 The editable installation uses the local source after each restart.
 Run `./launch.sh --demo` to preview the window without a Codex connection.
-Use `--interval 60` to change the refresh period or `--codex /path/to/codex`
-to select the Codex executable. The minimum refresh period is 15 seconds.
+Run `./launch.sh --interval 60` to refresh every 60 seconds.
+Use `./launch.sh --codex /path/to/codex` to select the Codex executable.
+The minimum refresh period is 15 seconds.
 
-## Desktop launcher
+## Desktop starter
+
+After setup, run this command from the repository directory:
 
 ```bash
 python3 install-launcher.py
 ```
 
-The installer creates a shortcut on your desktop and in the application menu.
-Select **Allow Launching** if your desktop asks. Some file managers open
-`.desktop` files as text inside project folders. Run the installer again if
-you move the project. Desktop startup errors appear in `launcher.log`.
+The installer creates `LimitWidget.desktop` on your desktop and in your user
+application directory. Double-click **Codex Limit Widget** on your desktop
+to start the widget. You can also select it from the application menu.
+The starter uses `.venv` and opens the widget without a terminal.
+
+If the shortcut opens as text, right-click the desktop shortcut and select
+**Allow Launching** or **Trust and Launch**, if available. Some file managers
+open `.desktop` files as text inside project folders. Use the installed desktop
+shortcut or application menu entry.
+
+The shortcuts contain an absolute path to `launch.sh`. If you move or rename
+the repository, repeat setup and run `python3 install-launcher.py` again.
+Recreate `.venv` if its installed commands still use the old path.
+
+If the widget does not start, check `launcher.log` in the repository directory.
+Run `./launch.sh` from a terminal to see errors directly.
 
 ## Controls
 
