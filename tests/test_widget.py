@@ -2,6 +2,7 @@
 
 import os
 from pathlib import Path
+import shutil
 import tempfile
 import unittest
 
@@ -23,7 +24,8 @@ class WidgetTests(unittest.TestCase):
         cls.app.setQuitOnLastWindowClosed(False)
 
     def setUp(self):
-        self.temp = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        self.temp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.temp)
         QSettings.setDefaultFormat(QSettings.Format.IniFormat)
         QSettings.setPath(QSettings.Format.IniFormat, QSettings.Scope.UserScope, str(self.temp))
         self.results = []
